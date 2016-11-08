@@ -232,6 +232,7 @@ public class KYPhotoBrowser: UIViewController, UICollectionViewDelegateFlowLayou
         layout?.scrollDirection = .horizontal
         
         collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: layout!)
+        collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView?.register(PhotoBrowserCell.self, forCellWithReuseIdentifier: "cell")
         collectionView?.backgroundColor = .black
         collectionView?.delegate = self
