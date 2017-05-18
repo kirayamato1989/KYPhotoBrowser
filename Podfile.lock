@@ -1,5 +1,5 @@
 PODS:
-  - Kingfisher (3.1.4)
+  - Kingfisher (3.9.1)
   - KYCircularProgress (1.0.0)
 
 DEPENDENCIES:
@@ -7,7 +7,7 @@ DEPENDENCIES:
   - KYCircularProgress
 
 SPEC CHECKSUMS:
-  Kingfisher: 6c67e3e57f2d81a9cfdfa25052cd86f33ceac9bb
+  Kingfisher: 6729a0baaa458245bfb8cd5a1296c71c10d6eb6c
   KYCircularProgress: e83d5346247c917182b451c6357fd96b3c3d71b6
 
 PODFILE CHECKSUM: 770cf1478a56b5f706978b93032bf1dcb7aefbf3

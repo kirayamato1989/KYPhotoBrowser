@@ -36,7 +36,7 @@ public class KYPhotoItem: KYPhotoSource {
             }
             else {
                 // 抓取image
-                KingfisherManager.shared.retrieveImage(with: url!, options: [.preloadAllGIFData], progressBlock: { [weak self](current, total) in
+                KingfisherManager.shared.retrieveImage(with: url!, options: [.preloadAllAnimationData], progressBlock: { [weak self](current, total) in
                     if let _ = self {
                         progress?(self!, current, total)
                     }
