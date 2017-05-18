@@ -23,73 +23,25 @@
 import UIKit
 
 // MARK: - KYCircularProgress
+@IBDesignable
 open class KYCircularProgress: UIView {
     
     /**
-    Typealias of progressChangedClosure.
-    */
-    public typealias progressChangedHandler = (_ progress: Double, _ circularView: KYCircularProgress) -> Void
-    
-    /**
-    This closure is called when set value to `progress` property.
-    */
-    fileprivate var progressChangedClosure: progressChangedHandler?
-    
-    /**
-    Main progress view.
-    */
-    fileprivate var progressView: KYCircularShapeView!
-    
-    /**
-    Gradient mask layer of `progressView`.
-    */
-    fileprivate var gradientLayer: CAGradientLayer!
-    
-    /**
-    Guide view of `progressView`.
-    */
-    fileprivate var progressGuideView: KYCircularShapeView?
-    
-    /**
-    Mask layer of `progressGuideView`.
-    */
-    fileprivate var guideLayer: CALayer?
-    
-    /**
-    Current progress value. (0.0 - 1.0)
-    */
+     Current progress value. (0.0 - 1.0)
+     */
     @IBInspectable open var progress: Double = 0.0 {
         didSet {
             let clipProgress = max( min(progress, Double(1.0)), Double(0.0) )
-            progressView.updateProgress(clipProgress)
+            progressView.update(progress: clipProgress)
             
-            progressChangedClosure?(clipProgress, self)
+            progressChanged?(clipProgress, self)
+            delegate?.progressChanged(progress: clipProgress, circularProgress: self)
         }
     }
     
     /**
-    Progress start angle.
-    */
-    open var startAngle: Double = 0.0 {
-        didSet {
-            progressView.startAngle = startAngle
-            progressGuideView?.startAngle = startAngle
-        }
-    }
-    
-    /**
-    Progress end angle.
-    */
-    open var endAngle: Double = 0.0 {
-        didSet {
-            progressView.endAngle = endAngle
-            progressGuideView?.endAngle = endAngle
-        }
-    }
-    
-    /**
-    Main progress line width.
-    */
+     Main progress line width.
+     */
     @IBInspectable open var lineWidth: Double = 8.0 {
         didSet {
             progressView.shapeLayer.lineWidth = CGFloat(lineWidth)
@@ -97,61 +49,157 @@ open class KYCircularProgress: UIView {
     }
     
     /**
-    Guide progress line width.
-    */
+     Guide progress line width.
+     */
     @IBInspectable open var guideLineWidth: Double = 8.0 {
         didSet {
-            progressGuideView?.shapeLayer.lineWidth = CGFloat(guideLineWidth)
+            guideView.shapeLayer.lineWidth = CGFloat(guideLineWidth)
         }
     }
     
     /**
-    Progress bar path. You can create various type of progress bar.
-    */
+     Progress guide bar color.
+     */
+    @IBInspectable open var guideColor: UIColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.2) {
+        didSet {
+            guideLayer.backgroundColor = guideColor.cgColor
+        }
+    }
+    
+    /**
+     Switch of progress guide view. If you set to `true`, progress guide view is enabled.
+     */
+    @IBInspectable open var showGuide: Bool = false {
+        didSet {
+            guideView.isHidden = !showGuide
+            guideLayer.backgroundColor = showGuide ? guideColor.cgColor : UIColor.clear.cgColor
+        }
+    }
+    
+    /**
+     Progress bar path. You can create various type of progress bar.
+     */
     open var path: UIBezierPath? {
         didSet {
             progressView.shapeLayer.path = path?.cgPath
-            progressGuideView?.shapeLayer.path = path?.cgPath
+            guideView.shapeLayer.path = path?.cgPath
         }
     }
     
     /**
-    Progress bar colors. You can set many colors in `colors` property, and it makes gradation color in `colors`.
-    */
-    open var colors: [UIColor]? {
+     Progress bar colors. You can set many colors in `colors` property, and it makes gradation color in `colors`.
+     */
+    open var colors: [UIColor] = [UIColor(rgba: 0x9ACDE7FF), UIColor(rgba: 0xE7A5C9FF)] {
         didSet {
-            updateColors(colors)
+            update(colors: colors)
         }
     }
     
     /**
-    Progress guide bar color.
-    */
-    @IBInspectable open var progressGuideColor: UIColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.2) {
+     Progress start angle.
+     */
+    open var startAngle: Double = 0.0 {
         didSet {
-            guideLayer?.backgroundColor = progressGuideColor.cgColor
+            progressView.startAngle = startAngle
+            guideView.startAngle = startAngle
         }
     }
-
+    
     /**
-    Switch of progress guide view. If you set to `true`, progress guide view is enabled.
-    */
-    @IBInspectable open var showProgressGuide: Bool = false {
+     Progress end angle.
+     */
+    open var endAngle: Double = 0.0 {
         didSet {
-            setNeedsLayout()
-            layoutIfNeeded()
-            configureProgressGuideLayer(showProgressGuide)
+            progressView.endAngle = endAngle
+            guideView.endAngle = endAngle
         }
+    }
+    
+    open var delegate: KYCircularProgressDelegate?
+    
+    /**
+    Typealias of progressChangedClosure.
+    */
+    public typealias progressChangedHandler = (_ progress: Double, _ circularProgress: KYCircularProgress) -> Void
+    
+    /**
+    This closure is called when set value to `progress` property.
+    */
+    fileprivate var progressChanged: progressChangedHandler?
+    
+    /**
+    Main progress view.
+    */
+    fileprivate lazy var progressView: KYCircularShapeView = {
+        let progressView = KYCircularShapeView(frame: self.bounds)
+        progressView.shapeLayer.fillColor = UIColor.clear.cgColor
+        progressView.shapeLayer.lineWidth = CGFloat(self.lineWidth)
+        progressView.radius = self.radius
+        progressView.shapeLayer.path = self.path?.cgPath
+        progressView.shapeLayer.strokeColor = self.tintColor.cgColor
+        return progressView
+    }()
+    
+    /**
+    Gradient mask layer of `progressView`.
+    */
+    fileprivate lazy var gradientLayer: CAGradientLayer = {
+        let gradientLayer = CAGradientLayer(layer: self.layer)
+        gradientLayer.frame = self.progressView.frame
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
+        gradientLayer.mask = self.progressView.shapeLayer
+        gradientLayer.colors = self.colors
+        self.layer.addSublayer(gradientLayer)
+        return gradientLayer
+    }()
+    
+    /**
+    Guide view of `progressView`.
+    */
+    fileprivate lazy var guideView: KYCircularShapeView = {
+        let guideView = KYCircularShapeView(frame: self.bounds)
+        guideView.shapeLayer.fillColor = UIColor.clear.cgColor
+        guideView.shapeLayer.lineWidth = CGFloat(self.guideLineWidth)
+        guideView.radius = self.radius
+        self.progressView.radius = self.radius
+        guideView.shapeLayer.path = self.progressView.shapeLayer.path
+        guideView.shapeLayer.strokeColor = self.tintColor.cgColor
+        guideView.update(progress: 1.0)
+        return guideView
+    }()
+    
+    /**
+    Mask layer of `progressGuideView`.
+    */
+    fileprivate lazy var guideLayer: CALayer = {
+        let guideLayer = CAGradientLayer(layer: self.layer)
+        guideLayer.frame = self.guideView.frame
+        guideLayer.mask = self.guideView.shapeLayer
+        guideLayer.backgroundColor = self.guideColor.cgColor
+        guideLayer.zPosition = -1
+        self.layer.addSublayer(guideLayer)
+        return guideLayer
+    }()
+    
+    private var radius: Double {
+        return lineWidth >= guideLineWidth ? lineWidth : guideLineWidth
     }
     
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        configureProgressLayer()
+        
+        setNeedsLayout()
+        layoutIfNeeded()
+        
+        update(colors: colors)
     }
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        configureProgressLayer()
+        
+        setNeedsLayout()
+        layoutIfNeeded()
     }
     
     /**
@@ -160,10 +208,10 @@ open class KYCircularProgress: UIView {
     - parameter frame: `KYCircularProgress` frame.
     - parameter showProgressGuide: If you set to `true`, progress guide view is enabled.
     */
-    public init(frame: CGRect, showProgressGuide: Bool) {
+    public init(frame: CGRect, showGuide: Bool) {
         super.init(frame: frame)
-        configureProgressLayer()
-        configureProgressGuideLayer(showProgressGuide)
+        self.showGuide = showGuide
+        guideLayer.backgroundColor = showGuide ? guideColor.cgColor : UIColor.clear.cgColor
     }
     
     /**
@@ -171,67 +219,35 @@ open class KYCircularProgress: UIView {
     
     - parameter completion: progress changed closure.
     */
-    open func progressChangedClosure(_ completion: @escaping progressChangedHandler) {
-        progressChangedClosure = completion
+    open func progressChanged(completion: @escaping progressChangedHandler) {
+        progressChanged = completion
     }
-    
-    fileprivate func configureProgressLayer() {
-        progressView = KYCircularShapeView(frame: bounds)
-        progressView.shapeLayer.fillColor = UIColor.clear.cgColor
-        progressView.shapeLayer.path = path?.cgPath
-        progressView.shapeLayer.lineWidth = CGFloat(lineWidth)
-        progressView.shapeLayer.strokeColor = tintColor.cgColor
 
-        gradientLayer = CAGradientLayer(layer: layer)
-        gradientLayer.frame = progressView.frame
-        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
-        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
-        gradientLayer.mask = progressView.shapeLayer
-        gradientLayer.colors = colors ?? [UIColor(rgba: 0x9ACDE755).cgColor, UIColor(rgba: 0xE7A5C955).cgColor]
+    public func set(progress: Double, duration: Double) {
+        let clipProgress = max( min(progress, Double(1.0)), Double(0.0) )
+        progressView.update(progress: clipProgress, duration: duration)
         
-        layer.addSublayer(gradientLayer)
+        progressChanged?(clipProgress, self)
+        delegate?.progressChanged(progress: clipProgress, circularProgress: self)
     }
     
-    fileprivate func configureProgressGuideLayer(_ showProgressGuide: Bool) {
-        if showProgressGuide && progressGuideView == nil {
-            progressGuideView = KYCircularShapeView(frame: bounds)
-            progressGuideView!.shapeLayer.fillColor = UIColor.clear.cgColor
-            progressGuideView!.shapeLayer.path = progressView.shapeLayer.path
-            progressGuideView!.shapeLayer.lineWidth = CGFloat(guideLineWidth)
-            progressGuideView!.shapeLayer.strokeColor = tintColor.cgColor
-
-            guideLayer = CAGradientLayer(layer: layer)
-            guideLayer!.frame = progressGuideView!.frame
-            guideLayer!.mask = progressGuideView!.shapeLayer
-            guideLayer!.backgroundColor = progressGuideColor.cgColor
-            guideLayer!.zPosition = -1
-
-            progressGuideView!.updateProgress(1.0)
-            
-            layer.addSublayer(guideLayer!)
+    fileprivate func update(colors: [UIColor]) {
+        gradientLayer.colors = colors.map {$0.cgColor}
+        if colors.count == 1 {
+            gradientLayer.colors?.append(colors.first!.cgColor)
         }
     }
-    
-    fileprivate func updateColors(_ colors: [UIColor]?) {
-        var convertedColors: [CGColor] = []
-        if let colors = colors {
-            for color in colors {
-                convertedColors.append(color.cgColor)
-            }
-            if convertedColors.count == 1 {
-                convertedColors.append(convertedColors.first!)
-            }
-        } else {
-            convertedColors = [UIColor(rgba: 0x9ACDE7FF).cgColor, UIColor(rgba: 0xE7A5C9FF).cgColor]
-        }
-        gradientLayer.colors = convertedColors
-    }
+}
+
+public protocol KYCircularProgressDelegate {
+    func progressChanged(progress: Double, circularProgress: KYCircularProgress)
 }
 
 // MARK: - KYCircularShapeView
 class KYCircularShapeView: UIView {
     var startAngle = 0.0
     var endAngle = 0.0
+    var radius = 0.0
     
     override class var layerClass : AnyClass {
         return CAShapeLayer.self
@@ -247,7 +263,7 @@ class KYCircularShapeView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        updateProgress(0)
+        update(progress: 0)
     }
     
     override func layoutSubviews() {
@@ -262,14 +278,26 @@ class KYCircularShapeView: UIView {
     
     private func layoutPath() -> UIBezierPath {
         let halfWidth = CGFloat(frame.width / 2.0)
-        return UIBezierPath(arcCenter: CGPoint(x: halfWidth, y: halfWidth), radius: halfWidth - shapeLayer.lineWidth, startAngle: CGFloat(startAngle), endAngle: CGFloat(endAngle), clockwise: true)
+        return UIBezierPath(arcCenter: CGPoint(x: halfWidth, y: halfWidth), radius: (frame.width - CGFloat(radius)) / 2, startAngle: CGFloat(startAngle), endAngle: CGFloat(endAngle), clockwise: true)
     }
     
-    fileprivate func updateProgress(_ progress: Double) {
+    fileprivate func update(progress: Double) {
         CATransaction.begin()
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
         shapeLayer.strokeEnd = CGFloat(progress)
         CATransaction.commit()
+    }
+    
+    fileprivate func update(progress: Double, duration: Double) {
+        CATransaction.begin()
+        let animation = CABasicAnimation(keyPath: "strokeEnd")
+        animation.duration = duration
+        animation.isRemovedOnCompletion = false
+        animation.fromValue = shapeLayer.strokeEnd
+        animation.toValue = progress
+        shapeLayer.add(animation, forKey: "animateStrokeEnd")
+        CATransaction.commit()
+        shapeLayer.strokeEnd = CGFloat(progress)
     }
 }
 

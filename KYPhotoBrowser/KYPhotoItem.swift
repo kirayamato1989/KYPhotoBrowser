@@ -16,7 +16,7 @@ public class KYPhotoItem: KYPhotoSource {
     public var image: UIImage?
     public var des: String?
     
-    init(url: URL?, placeholder: UIImage?, image: UIImage?, des: String?) {
+    public init(url: URL?, placeholder: UIImage?, image: UIImage?, des: String?) {
         self.image = image
         self.url = url
         self.placeholder = placeholder

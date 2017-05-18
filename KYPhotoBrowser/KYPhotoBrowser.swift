@@ -342,13 +342,13 @@ fileprivate class PhotoBrowserCell: UICollectionViewCell, UIScrollViewDelegate, 
     var longPressClosure: PhotoBrowserCellActionClosure?
     
     let progressView: KYCircularProgress = {
-        let view = KYCircularProgress(frame: CGRect(x: 0, y: 0, width: 44, height: 44), showProgressGuide: true)
+        let view = KYCircularProgress(frame: CGRect(x: 0, y: 0, width: 44, height: 44), showGuide: true)
         view.colors = [.gray]
-        view.progressGuideColor = .white
+        view.guideColor = .white
         view.guideLineWidth = 3
         view.lineWidth = 3
-        view.startAngle = -M_PI_2
-        view.endAngle = 3 * M_PI_2
+        view.startAngle = -.pi/2
+        view.endAngle = 3 * .pi/2
         return view
     }()
     
