@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "KYPhotoBrowser"
-  s.version      = "0.1"
+  s.version      = "0.1.1"
   s.summary      = "A light PhotoBrowser in Swift 3 like IDMPhotoBrowser"
   s.homepage     = "https://github.com/kirayamato1989"
 
